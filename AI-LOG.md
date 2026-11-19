@@ -1,7 +1,10 @@
 # AI-LOG
 
-Write down, in order, what you asked the AI. It is not a punishment: a missing or false log lowers the level D grade.
-
-| Time (approx.) | What you asked (briefly) | What you kept | What you changed or rejected |
+| Time (exam started 09:00) | What you asked (briefly) | What you kept | What you changed or rejected |
 |---|---|---|---|
-| _(fill in)_ | _(fill in)_ | _(fill in)_ | _(fill in)_ |
+| before the exam (Nov 6, 13, 18) | Practice on other projects: code review and unit tests (CampusMarket), a small Event aggregate with the kit (ProbaExamen) | Understood the kit structure: Domain/Common/Infrastructure, Features slices, Result/Error, IUnitOfWork | It could not find the kit at first; I gave it the real path. The practice projects are not in this repo |
+| Nov 18, evening (Claude chat) | The exam kit: foundation files, BRIEF-CLAUDE-CODE.md and the prompts for Claude Code (Level A, B, C, final check, names check) | Copied the kit into src/RoomHub.Api at 09:08: Result, Error, Unit, IUnitOfWork, ICommandHandler, AddHandlers, ToProblem, UtcDateTimeConverter | The kit files use the namespace RoomHub.Api. The brief and the prompts are not in the repo |
+| Nov 18, evening + today ~09:20-09:27 (Claude chat) | A test-api script that checks the API against the contract and rules R1-R8 | Ran it on the starter and found the 5 bugs; I run it after every level. Today I extended it with tests for R9-R11 | It is not part of the project and not in the repo |
+| 0:10 (09:10) | Level A: move the code into 5 Features/ slices, with fixed names and the exact routes from ASSIGNMENT.md | 5 slices; RoomEndpoints.MapRooms() and BookingEndpoints.MapBookings() with MapGroup; old Endpoints/, RoomService, BookingService deleted. Build OK | Gave it the names and routes up front. It left BusinessException, middleware and the R5-R8 bugs; I accepted that, since Level A only moves code |
+| 0:15 (09:15) | Level B: rich domain, Result/Error, ICommandHandler handlers, thin endpoints, R5-R8 | Room.Create / Booking.Create return `Result<T>`; R5 and R6 in Booking.Validate; half-open OverlapsWith on Active only (R7); Cancel() gives 409 the second time (R8); Models/, Services/, Middleware/ deleted. Build OK | Required "now" from TimeProvider (no DateTime.UtcNow) and the room loaded first, so 404 comes before validation. Kept the in-memory repositories until Level C |
+| 0:26 (09:26) | R9: max 2 active bookings per bookedBy per UTC day, 3rd = 409 | IBookingRepository.CountActiveForBookedByOnDayAsync (in InMemoryBookingRepository); BookingErrors.DailyLimitExceeded (409); Booking.MaxActivePerDay = 2; rule in Booking.Create, not in the endpoint | I dictated the names and the error order (404, 400, overlap 409, limit 409). Accepted moving the overlap check into Booking.Create to keep that order. Build was blocked by the running API (exe locked); it compiled to a scratch folder |
