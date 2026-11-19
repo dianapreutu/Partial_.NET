@@ -21,6 +21,22 @@ public sealed class InMemoryBookingRepository : IBookingRepository
                 _bookings.Where(b => b.RoomId == roomId && b.Status == BookingStatus.Active).ToList());
     }
 
+    public Task<int> CountActiveForBookedByOnDayAsync(
+        string bookedBy,
+        DateTime dayUtc,
+        CancellationToken cancellationToken)
+    {
+        var from = dayUtc.Date;
+        var to = from.AddDays(1);
+
+        lock (_lock)
+            return Task.FromResult(_bookings.Count(b =>
+                b.Status == BookingStatus.Active
+                && b.BookedBy == bookedBy
+                && b.StartUtc >= from
+                && b.StartUtc < to));
+    }
+
     public void Add(Booking booking)
     {
         lock (_lock)

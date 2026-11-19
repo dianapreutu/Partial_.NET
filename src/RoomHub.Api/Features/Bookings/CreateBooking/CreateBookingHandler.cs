@@ -28,20 +28,25 @@ public sealed class CreateBookingHandler(
         if (room is null)
             return RoomErrors.NotFound;
 
+        var activeInRoom = await bookings.ListActiveForRoomAsync(room.Id, cancellationToken);
+
+        // Bookings are stored trimmed, so count with the trimmed name.
+        var bookedBy = command.BookedBy?.Trim() ?? string.Empty;
+        var activeForDay = await bookings.CountActiveForBookedByOnDayAsync(
+            bookedBy, command.StartUtc, cancellationToken);
+
         var created = Booking.Create(
             room,
             command.BookedBy,
             command.StartUtc,
             command.EndUtc,
             command.Attendees,
-            time.GetUtcNow().UtcDateTime);
+            time.GetUtcNow().UtcDateTime,
+            activeInRoom,
+            activeForDay);
 
         if (created.IsFailure)
             return created.Error;
-
-        var active = await bookings.ListActiveForRoomAsync(room.Id, cancellationToken);
-        if (active.Any(b => b.OverlapsWith(command.StartUtc, command.EndUtc)))
-            return BookingErrors.RoomOccupied;
 
         var booking = created.Value;
         bookings.Add(booking);

@@ -13,6 +13,8 @@ public sealed class Booking
 {
     public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
 
+    public const int MaxActivePerDay = 2;
+
     private Booking()
     {
     }
@@ -31,11 +33,20 @@ public sealed class Booking
         DateTime startUtc,
         DateTime endUtc,
         int attendees,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        IReadOnlyList<Booking> activeRoomBookings,
+        int activeBookingsForDay)
     {
         var error = Validate(room, bookedBy, startUtc, endUtc, attendees, nowUtc);
         if (error is not null)
             return error;
+
+        // Order matters: validation (400), then overlap (409), then the daily limit (409).
+        if (activeRoomBookings.Any(b => b.OverlapsWith(startUtc, endUtc)))
+            return BookingErrors.RoomOccupied;
+
+        if (activeBookingsForDay >= MaxActivePerDay)
+            return BookingErrors.DailyLimitExceeded;
 
         return new Booking
         {
