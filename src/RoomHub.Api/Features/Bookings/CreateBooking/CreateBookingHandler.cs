@@ -17,6 +17,7 @@ public sealed record CreateBookingResponse(Guid Id, Guid RoomId, string Status);
 public sealed class CreateBookingHandler(
     IRoomRepository rooms,
     IBookingRepository bookings,
+    IUnitOfWork unitOfWork,
     TimeProvider time) : ICommandHandler<CreateBookingCommand, CreateBookingResponse>
 {
     public async Task<Result<CreateBookingResponse>> Handle(
@@ -50,6 +51,7 @@ public sealed class CreateBookingHandler(
 
         var booking = created.Value;
         bookings.Add(booking);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CreateBookingResponse(booking.Id, booking.RoomId, booking.Status.ToString());
     }

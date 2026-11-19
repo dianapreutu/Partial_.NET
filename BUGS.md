@@ -1,8 +1,7 @@
-# BUGS
-
-The starter contains behaviors that contradict `ASSIGNMENT.md`. Write here every discrepancy you found.
-Fill it in yourself, in your own words. There is no required number: what counts is that they are real.
-
 | Which rule from ASSIGNMENT.md is violated (R1–R8) | Where the problem was in the starter (file, approximate line) | How you discovered it (test, reading, AI) | What you changed |
 |---|---|---|---|
-| _(fill in)_ | _(fill in)_ | _(fill in)_ | _(fill in)_ |
+| R5 | Services/BookingService.cs, Create, lines ~8–30 | Test: a booking in 2020 returned 201 instead of 400 | Check in Booking.Validate: startUtc < nowUtc -> BookingErrors.StartsInThePast; now comes from TimeProvider in CreateBookingHandler |
+| R6 | Services/BookingService.cs, Create, lines ~8–30 | Test: a 5-hour booking returned 201 | Booking.Validate: endUtc - startUtc > 4h -> error; exactly 4h is allowed (> not >=) |
+| R7 | Services/BookingService.cs, line ~28: <= in the overlap condition | Test: 12–14 after 10–12 gave 409; then read the condition | Booking.OverlapsWith with strict <, so touching intervals are allowed |
+| R8 (and R7) | Services/BookingService.cs, line ~26: the loop includes cancelled bookings | Test: rebooking 10–12 after cancel gave 409 | ListActiveForRoomAsync returns only Active; OverlapsWith also checks Status == Active |
+| R8 | Services/BookingService.cs, Cancel, lines ~56–60 | Test: cancelling twice returned 204 instead of 409 | Booking.Cancel() returns BookingErrors.AlreadyCancelled (Conflict -> 409) |

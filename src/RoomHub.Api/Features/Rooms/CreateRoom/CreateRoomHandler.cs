@@ -8,19 +8,21 @@ public sealed record CreateRoomCommand(string? Name, int Capacity) : ICommand<Cr
 
 public sealed record CreateRoomResponse(Guid Id, string Name, int Capacity);
 
-public sealed class CreateRoomHandler(IRoomRepository rooms)
+public sealed class CreateRoomHandler(IRoomRepository rooms, IUnitOfWork unitOfWork)
     : ICommandHandler<CreateRoomCommand, CreateRoomResponse>
 {
-    public Task<Result<CreateRoomResponse>> Handle(CreateRoomCommand command, CancellationToken cancellationToken)
+    public async Task<Result<CreateRoomResponse>> Handle(
+        CreateRoomCommand command,
+        CancellationToken cancellationToken)
     {
         var created = Room.Create(command.Name, command.Capacity);
         if (created.IsFailure)
-            return Task.FromResult<Result<CreateRoomResponse>>(created.Error);
+            return created.Error;
 
         var room = created.Value;
         rooms.Add(room);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Task.FromResult<Result<CreateRoomResponse>>(
-            new CreateRoomResponse(room.Id, room.Name, room.Capacity));
+        return new CreateRoomResponse(room.Id, room.Name, room.Capacity);
     }
 }

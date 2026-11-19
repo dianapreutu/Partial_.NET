@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using RoomHub.Api.Common;
 using RoomHub.Api.Domain.Rooms;
+using RoomHub.Api.Infrastructure.Persistence;
 
 namespace RoomHub.Api.Features.Rooms.GetRoom;
 
@@ -12,13 +14,17 @@ public static class GetRoomEndpoint
 
     private static async Task<Results<Ok<GetRoomResponse>, ProblemHttpResult>> Handle(
         Guid id,
-        IRoomRepository rooms,
+        RoomHubDbContext db,
         CancellationToken cancellationToken)
     {
-        var room = await rooms.GetByIdAsync(id, cancellationToken);
+        var room = await db.Rooms
+            .AsNoTracking()
+            .Where(r => r.Id == id)
+            .Select(r => new GetRoomResponse(r.Id, r.Name, r.Capacity))
+            .FirstOrDefaultAsync(cancellationToken);
 
         return room is null
             ? RoomErrors.NotFound.ToProblem()
-            : TypedResults.Ok(new GetRoomResponse(room.Id, room.Name, room.Capacity));
+            : TypedResults.Ok(room);
     }
 }

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using RoomHub.Api.Common;
 using RoomHub.Api.Domain.Bookings;
+using RoomHub.Api.Infrastructure.Persistence;
 
 namespace RoomHub.Api.Features.Bookings.GetBooking;
 
@@ -19,10 +21,14 @@ public static class GetBookingEndpoint
 
     private static async Task<Results<Ok<GetBookingResponse>, ProblemHttpResult>> Handle(
         Guid id,
-        IBookingRepository bookings,
+        RoomHubDbContext db,
         CancellationToken cancellationToken)
     {
-        var b = await bookings.GetByIdAsync(id, cancellationToken);
+        var b = await db.Bookings
+            .AsNoTracking()
+            .Where(x => x.Id == id)
+            .Select(x => new { x.Id, x.RoomId, x.BookedBy, x.StartUtc, x.EndUtc, x.Attendees, x.Status })
+            .FirstOrDefaultAsync(cancellationToken);
 
         return b is null
             ? BookingErrors.NotFound.ToProblem()

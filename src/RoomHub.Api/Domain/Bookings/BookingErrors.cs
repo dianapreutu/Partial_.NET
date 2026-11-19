@@ -11,6 +11,8 @@ public static class BookingErrors
     public static readonly Error AttendeesExceedCapacity = Error.Validation("AttendeesExceedCapacity", "The room does not have enough seats.");
     public static readonly Error StartInPast = Error.Validation("StartInPast", "A booking cannot start in the past.");
     public static readonly Error TooLong = Error.Validation("BookingTooLong", "A booking cannot last more than 4 hours.");
+    public static readonly Error DurationTooLongForLargeRoom = Error.Validation("DurationTooLongForLargeRoom", "Rooms with more than 10 seats can be booked for at most 2 hours.");
+    public static readonly Error TooLateToCancel = Error.Conflict("TooLateToCancel", "A booking can be cancelled only at least 60 minutes before it starts.");
     public static readonly Error RoomOccupied = Error.Conflict("RoomOccupied", "The room is occupied in this interval.");
     public static readonly Error DailyLimitExceeded = Error.Conflict("DailyLimitExceeded", "A participant cannot have more than 2 active bookings per day.");
     public static readonly Error AlreadyCancelled = Error.Conflict("AlreadyCancelled", "The booking is already cancelled.");

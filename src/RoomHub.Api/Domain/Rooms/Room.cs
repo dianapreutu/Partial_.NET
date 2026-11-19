@@ -4,6 +4,8 @@ namespace RoomHub.Api.Domain.Rooms;
 
 public sealed class Room
 {
+    public const int NameMaxLength = 100;
+
     private Room()
     {
     }

@@ -14,6 +14,10 @@ public sealed class Booking
     public static readonly TimeSpan MaxDuration = TimeSpan.FromHours(4);
 
     public const int MaxActivePerDay = 2;
+    public const int BookedByMaxLength = 100;
+    public const int LargeRoomCapacity = 10;
+    public static readonly TimeSpan MaxDurationLargeRoom = TimeSpan.FromHours(2);
+    public static readonly TimeSpan MinCancelNotice = TimeSpan.FromMinutes(60);
 
     private Booking()
     {
@@ -83,6 +87,9 @@ public sealed class Booking
         if (startUtc < nowUtc)
             return BookingErrors.StartInPast;
 
+        if (room.Capacity > LargeRoomCapacity && endUtc - startUtc > MaxDurationLargeRoom)
+            return BookingErrors.DurationTooLongForLargeRoom;
+
         if (endUtc - startUtc > MaxDuration)
             return BookingErrors.TooLong;
 
@@ -93,10 +100,13 @@ public sealed class Booking
     public bool OverlapsWith(DateTime startUtc, DateTime endUtc) =>
         Status == BookingStatus.Active && StartUtc < endUtc && startUtc < EndUtc;
 
-    public Result<Unit> Cancel()
+    public Result<Unit> Cancel(DateTime nowUtc)
     {
         if (Status == BookingStatus.Cancelled)
             return BookingErrors.AlreadyCancelled;
+
+        if (StartUtc - nowUtc < MinCancelNotice)
+            return BookingErrors.TooLateToCancel;
 
         Status = BookingStatus.Cancelled;
         return Unit.Value;
