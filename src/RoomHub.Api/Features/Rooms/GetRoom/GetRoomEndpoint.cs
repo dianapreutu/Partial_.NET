@@ -1,5 +1,6 @@
-using RoomHub.Api.Repositories;
-using RoomHub.Api.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
+using RoomHub.Api.Common;
+using RoomHub.Api.Domain.Rooms;
 
 namespace RoomHub.Api.Features.Rooms.GetRoom;
 
@@ -9,11 +10,15 @@ public static class GetRoomEndpoint
 {
     public static void Map(RouteGroupBuilder group) => group.MapGet("/{id:guid}", Handle);
 
-    private static IResult Handle(Guid id, RoomRepository rooms)
+    private static async Task<Results<Ok<GetRoomResponse>, ProblemHttpResult>> Handle(
+        Guid id,
+        IRoomRepository rooms,
+        CancellationToken cancellationToken)
     {
-        var room = rooms.Get(id)
-                   ?? throw new BusinessException("RoomNotFound", "The room does not exist.", 404);
+        var room = await rooms.GetByIdAsync(id, cancellationToken);
 
-        return Results.Ok(new GetRoomResponse(room.Id, room.Name, room.Capacity));
+        return room is null
+            ? RoomErrors.NotFound.ToProblem()
+            : TypedResults.Ok(new GetRoomResponse(room.Id, room.Name, room.Capacity));
     }
 }

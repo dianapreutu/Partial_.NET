@@ -1,36 +1,24 @@
-using RoomHub.Api.Models;
-using RoomHub.Api.Repositories;
-using RoomHub.Api.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
+using RoomHub.Api.Common;
+using RoomHub.Api.Common.Cqrs;
 
 namespace RoomHub.Api.Features.Rooms.CreateRoom;
 
 public sealed record CreateRoomRequest(string? Name, int Capacity);
 
-public sealed record CreateRoomResponse(Guid Id, string Name, int Capacity);
-
 public static class CreateRoomEndpoint
 {
     public static void Map(RouteGroupBuilder group) => group.MapPost("/", Handle);
 
-    private static IResult Handle(CreateRoomRequest request, RoomRepository rooms)
+    private static async Task<Results<Created<CreateRoomResponse>, ProblemHttpResult>> Handle(
+        CreateRoomRequest request,
+        ICommandHandler<CreateRoomCommand, CreateRoomResponse> handler,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-            throw new BusinessException("InvalidName", "Room name is required.", 400);
+        var result = await handler.Handle(new CreateRoomCommand(request.Name, request.Capacity), cancellationToken);
 
-        if (request.Capacity <= 0)
-            throw new BusinessException("InvalidCapacity", "Capacity must be positive.", 400);
-
-        var room = new Room
-        {
-            Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
-            Capacity = request.Capacity
-        };
-
-        rooms.Add(room);
-
-        return Results.Created(
-            $"/api/rooms/{room.Id}",
-            new CreateRoomResponse(room.Id, room.Name, room.Capacity));
+        return result.IsSuccess
+            ? TypedResults.Created($"/api/rooms/{result.Value.Id}", result.Value)
+            : result.Error.ToProblem();
     }
 }

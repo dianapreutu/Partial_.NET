@@ -1,6 +1,7 @@
-using RoomHub.Api.Models;
-using RoomHub.Api.Repositories;
-using RoomHub.Api.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
+using RoomHub.Api.Common;
+using RoomHub.Api.Common.Cqrs;
+using RoomHub.Api.Domain.Common;
 
 namespace RoomHub.Api.Features.Bookings.CancelBooking;
 
@@ -8,13 +9,15 @@ public static class CancelBookingEndpoint
 {
     public static void Map(RouteGroupBuilder group) => group.MapPost("/{id:guid}/cancel", Handle);
 
-    private static IResult Handle(Guid id, BookingRepository bookings)
+    private static async Task<Results<NoContent, ProblemHttpResult>> Handle(
+        Guid id,
+        ICommandHandler<CancelBookingCommand, Unit> handler,
+        CancellationToken cancellationToken)
     {
-        var booking = bookings.Get(id)
-                      ?? throw new BusinessException("BookingNotFound", "The booking does not exist.", 404);
+        var result = await handler.Handle(new CancelBookingCommand(id), cancellationToken);
 
-        booking.Status = BookingStatus.Cancelled;
-
-        return Results.NoContent();
+        return result.IsSuccess
+            ? TypedResults.NoContent()
+            : result.Error.ToProblem();
     }
 }

@@ -1,5 +1,6 @@
-using RoomHub.Api.Repositories;
-using RoomHub.Api.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
+using RoomHub.Api.Common;
+using RoomHub.Api.Domain.Bookings;
 
 namespace RoomHub.Api.Features.Bookings.GetBooking;
 
@@ -16,12 +17,16 @@ public static class GetBookingEndpoint
 {
     public static void Map(RouteGroupBuilder group) => group.MapGet("/{id:guid}", Handle);
 
-    private static IResult Handle(Guid id, BookingRepository bookings)
+    private static async Task<Results<Ok<GetBookingResponse>, ProblemHttpResult>> Handle(
+        Guid id,
+        IBookingRepository bookings,
+        CancellationToken cancellationToken)
     {
-        var b = bookings.Get(id)
-                ?? throw new BusinessException("BookingNotFound", "The booking does not exist.", 404);
+        var b = await bookings.GetByIdAsync(id, cancellationToken);
 
-        return Results.Ok(new GetBookingResponse(
-            b.Id, b.RoomId, b.BookedBy, b.StartUtc, b.EndUtc, b.Attendees, b.Status.ToString()));
+        return b is null
+            ? BookingErrors.NotFound.ToProblem()
+            : TypedResults.Ok(new GetBookingResponse(
+                b.Id, b.RoomId, b.BookedBy, b.StartUtc, b.EndUtc, b.Attendees, b.Status.ToString()));
     }
 }
