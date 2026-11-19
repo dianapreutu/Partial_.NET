@@ -7,7 +7,7 @@ An unanswered question gives 0 points.
 ## 1. A rule you moved
 Pick one business rule (R1–R8). In which file did it live in the starter and in which file does it live now? Why there?
 
-_(your answer here)_
+Rule R7 (half-open interval overlap check on active bookings only) used to live in Services/BookingService.cs, and now lives in Domain/Bookings/Booking.cs (Booking.OverlapsWith / Booking.Create). Moving it into the Booking aggregate ensures the entity enforces its own invariants independently of persistence or HTTP layers and can be unit-tested directly.
 
 ## 2. Result instead of an exception
 Why is `Result` a better choice than an exception for "the room is occupied"? What happens in your code when an `Error` is returned?
